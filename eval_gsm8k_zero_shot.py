@@ -33,6 +33,9 @@ def main():
     torch.manual_seed(random_seed)
     random.seed(random_seed)
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {device}")
+
     print('Loading model and tokenizer...')
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     tokenizer.pad_token = tokenizer.eos_token

@@ -9,6 +9,7 @@ from transformers import (
     AutoModelForCausalLM,
     StoppingCriteriaList,
     BitsAndBytesConfig,
+    AutoConfig
 )
 from utils import (
     SpecificStringStoppingCriteria,
@@ -18,6 +19,7 @@ from utils import (
 from datasets import load_dataset
 from collections import Counter
 import json
+from datetime import datetime
   
 
 def main():
@@ -37,16 +39,19 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
 
+    config = AutoConfig.from_pretrained(args.model)
+    config.num_experts_per_tok = 2
+
     print('Loading model and tokenizer...')
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     tokenizer.pad_token = tokenizer.eos_token
-    bnb = BitsAndBytesConfig(
+    '''bnb = BitsAndBytesConfig(
         load_in_4bit=True,                 # 或 8bit 視顯存而定
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.bfloat16,
         llm_int8_threshold=6.0
-        )
-    model = AutoModelForCausalLM.from_pretrained(args.model, device_map='auto', quantization_config=bnb, torch_dtype=torch.float16) 
+        )'''
+    model = AutoModelForCausalLM.from_pretrained(args.model, device_map='auto', config=config, torch_dtype=torch.float16) 
     
     print('\nLoading dataset...')
     dataset = load_dataset('gsm8k', "main", split='test')
@@ -133,6 +138,8 @@ def main():
                 
 
 if __name__ == '__main__':
+    now = datetime.now()
+    print(now.strftime("%Y-%m-%d %H:%M:%S"))
     main()
 
 

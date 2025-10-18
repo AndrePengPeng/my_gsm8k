@@ -7,7 +7,8 @@ from tqdm import tqdm
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
-    StoppingCriteriaList
+    StoppingCriteriaList,
+    BitsAndBytesConfig,
 )
 from utils import (
     SpecificStringStoppingCriteria,
@@ -39,7 +40,13 @@ def main():
     print('Loading model and tokenizer...')
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     tokenizer.pad_token = tokenizer.eos_token
-    model = AutoModelForCausalLM.from_pretrained(args.model, device_map='auto', torch_dtype=torch.float16) 
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=True,                 # 或 8bit 視顯存而定
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+        llm_int8_threshold=6.0
+        )
+    model = AutoModelForCausalLM.from_pretrained(args.model, device_map='auto', quantization_config=bnb, torch_dtype=torch.float16) 
     
     print('\nLoading dataset...')
     dataset = load_dataset('gsm8k', "main", split='test')
